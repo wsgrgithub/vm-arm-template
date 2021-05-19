@@ -1,0 +1,354 @@
+﻿{
+  "handler": "Microsoft.Azure.CreateUIDef",
+  "version": "0.1.2-preview",
+  "parameters": {
+
+    "basics": [
+      {
+        "name": "vmNametext",
+        "type": "Microsoft.Common.InfoBox",
+        "visible": true,
+        "multiLine": false,
+        "options": {
+          "icon": "Index",
+          "text": "Virtual Machine Naming convention: [az {w = West Us,e = East Us} {p = Prod,d = Dev} {application}{misc/number}].    Example: 'azwdtools1'"
+        }
+      },
+      {
+        "name": "virtualMachineCount",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Number of virtual machines",
+        "toolTip": "Number of virtual machines to deploy.",
+        "defaultValue": 1,
+        "constraints": {
+          "required": true,
+          "allowedValues": [
+            {
+              "label": "1",
+              "value": 1
+            },
+            {
+              "label": "2",
+              "value": 2
+            },
+            {
+              "label": "3",
+              "value": 3
+            },
+            {
+              "label": "4",
+              "value": 4
+            }
+          ]
+        }
+      },
+            {
+              "name": "vmName",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Virtual Machine Name",
+              "toolTip": "WSGR VM Name [az][w-west us;e-eastus][app name][misc]",
+              "constraints": {
+                "required": true,
+                "regex": "^[a-z0-9]{5,15}$",
+                "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+              }
+            },
+            {
+              "name": "adminUsername",
+              "type": "Microsoft.Common.TextBox",
+              "label": "VM Local Administrator",
+              "defaultValue": "svc_azureadadmin",
+              "toolTip": "",
+              "constraints": {
+                "required": true,
+                "disable": true
+              },
+              "osPlatform": "Windows",
+              "visible": true
+            },
+            {
+              "name": "adminPassword",
+              "type": "Microsoft.Compute.CredentialsCombo",
+              "label": {
+                "password": "Password",
+                "confirmPassword": "Confirm password"
+              },
+              "toolTip": {
+                "password": ""
+              },
+              "constraints": {
+                "required": true
+              },
+              "options": {
+                "hideConfirmation": false
+              },
+              "osPlatform": "Windows",
+              "visible": true
+            },
+            {
+              "name": "domainNametext",
+              "type": "Microsoft.Common.InfoBox",
+              "visible": true,
+              "multiLine": false,
+              "options": {
+                "icon": "Index",
+                "text": "Please enter credentials to join WSGR domain"
+              }
+            },
+            {
+              "name": "domainUsername",
+              "type": "Microsoft.Common.TextBox",
+              "label": "Domain Administrator",
+              "defaultValue": "",
+              "toolTip": "",
+              "constraints": {
+                "required": true,
+                "regex": "^\\w+([\\.-]?\\w+)*@\\w+([\\.-]?\\w+)*(\\.\\w{2,3})+$",
+                "validationMessage": "Please provide valid WSGR Admin Email"
+              },
+              "osPlatform": "Windows",
+              "visible": false
+            },
+            {
+              "name": "domainPassword",
+              "type": "Microsoft.Compute.CredentialsCombo",
+              "label": {
+                "password": "Domain Admin password",
+                "confirmPassword": "Confirm password"
+              },
+              "constraints": {
+                "required": true
+              },
+              "options": {
+                "hideConfirmation": true
+              },
+              "osPlatform": "Windows",
+              "visible": false
+            }
+
+          ],
+          "steps": [
+            {
+              "name": "deploymentDetails",
+              "label": "Deployment Details",
+              "subLabel": {
+                "preValidation": "Required",
+                "postValidation": "Done"
+              },
+              "bladeTitle": "Deployment details",
+              "elements": [
+                {
+                  "name": "availabilitySet",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "Availability Option",
+                  "defaultValue": "no",
+                  "constraints": {
+                    "required": "true",
+                    "allowedValues": [
+                      {
+                        "label": "No infrastructure redundancy required",
+                        "value": "no"
+                      },
+                      {
+                        "label": "Create NEW Availability Set fot redundancy & availability",
+                        "value": "yes"
+                      }
+                    ]
+                  },
+                  "visible": true
+                },
+
+
+                {
+                  "name": "availabilitySetName",
+                  "type": "Microsoft.Common.TextBox",
+                  "label": "Availability Set Name",
+                  "toolTip": "Use only allowed characters",
+                  "placeholder": "",
+                  "defaultValue": "[concat (substring(basics('vmName'), 4, 5),'-AVE')]",
+                  "multiLine": false,
+                  "constraints": {
+                    "required": "true",
+                    "validations": [
+                      {
+
+                        "message": "Only alphanumeric characters are allowed, and the value must be 4-8 characters long."
+                      }
+                    ]
+                  },
+                  "visible": "[equals('yes', steps('deploymentDetails').availabilitySet)]"
+                },
+                {
+                  "name": "availabilitySetFaultDomains",
+                  "type": "Microsoft.Common.Slider",
+                  "min": 0,
+                  "max": 3,
+                  "label": "Availability Set Fault Domains",
+                  "defaultValue": 2,
+                  "showStepMarkers": true,
+                  "toolTip": "Pick number of Fault Domains",
+                  "constraints": {
+                    "required": "true",
+
+                    "validationMessage": "Number of Fault domains must be between 2 to 5"
+                  },
+                  "visible": "[equals('yes',steps('deploymentDetails').availabilitySet)]"
+                },
+                {
+                  "name": "availabilitySetUpdateDomains",
+                  "type": "Microsoft.Common.Slider",
+                  "min": 0,
+                  "max": 10,
+                  "label": "Availability Set Fault Domains",
+                  "defaultValue": 5,
+                  "showStepMarkers": true,
+                  "toolTip": "Pick number of Fault Domains",
+                  "constraints": {
+                    "required": "true",
+
+                    "validationMessage": "Number of Fault domains must be between 2 to 5"
+                  },
+                  "visible": "[equals('yes',steps('deploymentDetails').availabilitySet)]"
+                },
+
+                {
+                  "name": "windowsOSVersion",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "Select VM Image",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Windows Server 2016 Datacenter - Gen1",
+                        "value": "2016-Datacenter"
+                      },
+                      {
+                        "label": "Windows Server 2019 Datacenter - Gen1",
+                        "value": "2019-Datacenter"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "osPlatform": "Windows"
+                },
+                {
+                  "name": "vmSize",
+                  "type": "Microsoft.Common.DropDown",
+                  "label": "Select VM Size",
+                  "constraints": {
+                    "allowedValues": [
+                      {
+                        "label": "Standard_B2s - 2 vcpus, 4 GIB RAM, IPOS 1280 ($36.43/month)",
+                        "value": "Standard_B2s"
+                      },
+                      {
+                        "label": "Standard_B2ms - 2 vcpus, 8 GIB RAM, IPOS 1920 ($72.85/month)",
+                        "value": "Standard_B2ms"
+                      },
+                      {
+                        "label": "Standard_B4ms - 4 vcpus, 16 GIB RAM, IPOS 2880 ($146.00/month)",
+                        "value": "Standard_D2s_v3"
+                      },
+                      {
+                        "label": "Standard_D4s_v3 - 4 vcpus, 16 GIB RAM, IPOS 6400 ($160.60/month)",
+                        "value": "Standard_D4s_v3"
+                      },
+                      {
+                        "label": "Standard_D8s_v4 - 8 vcpus, 32 GIB RAM, IPOS 12800 ($316.82/month)",
+                        "value": "Standard_D8s_v4"
+                      }
+                    ],
+                    "required": true
+                  },
+                  "osPlatform": "Windows",
+                  "imageReference": {
+                    "publisher": "MicrosoftWindowsServer",
+                    "offer": "WindowsServer",
+                    "sku": "2012-R2-Datacenter"
+                  },
+                  "visible": true
+                }
+              ]
+            },
+            {
+              "name": "networking",
+              "label": "Network",
+              "subLabel": {
+                "preValidation": "",
+                "postValidation": "Done"
+              },
+              "bladeTitle": "Network",
+              "elements": [
+                {
+                  "name": "vnet",
+                  "type": "Microsoft.Network.VirtualNetworkCombo",
+                  "label": {
+                    "virtualNetwork": "Virtual Network",
+                    "subnets": "Subnets"
+                  },
+                  "defaultValue": {
+                    "name": "vmx-vnet",
+                    "addressPrefixSize": "/16"
+                  },
+                  "constraints": {
+                    "minAddressPrefixSize": "/24"
+                  },
+                  "subnets": {
+                    "subnet1": {
+                      "label": "Subnet",
+                      "defaultValue": {
+                        "name": "vmx-subnet",
+                        "addressPrefixSize": "/24"
+                      },
+                      "constraints": {
+                        "minAddressPrefixSize": "/29",
+                        "minAddressCount": 8,
+                        "requireContiguousAddresses": true
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+
+            {
+              "name": "tags",
+              "label": "Tags",
+              "subLabel": {
+                "preValidation": "",
+                "postValidation": "Done"
+              },
+              "bladeTitle": "Tags",
+              "elements": [
+                {
+                  "name": "tagsByResource",
+                  "type": "Microsoft.Common.TagsByResource",
+                  "resources": [
+                    "Microsoft.Storage/storageAccounts",
+                    "Microsoft.Compute/virtualMachines"
+                  ]
+                }
+              ]
+            }
+
+          ],
+    "outputs": {
+      "location": "[location()]",
+      "numberOfInstances": "[basics('virtualMachineCount')]",
+      "vmName": "[basics('vmName')]",
+      "adminUsername": "[basics('adminUsername')]",
+      "adminPassword": "[basics('adminPassword').password]",
+      "virtualMachineSize": "[steps('deploymentDetails').vmSize]",
+      "windowsOSVersion": "[steps('deploymentDetails').windowsOSVersion]",
+      "availabilitySet": "[steps('deploymentDetails').availabilitySet]",
+
+      "availabilitySetName": "[steps('deploymentDetails').availabilitySetName]",
+
+      "virtualNetworkName": "[steps('networking').vnet.name]",
+      "virtualNetworkNewOrExisting": "[steps('networking').vnet.newOrExisting]",
+      "virtualNetworkAddressPrefix": "[first(steps('networking').vnet.addressPrefixes)]",
+      "virtualNetworkResourceGroup": "[steps('networking').vnet.resourceGroup]",
+      "subnetName": "[steps('networking').vnet.subnets.subnet1.name]",
+      "subnetAddressPrefix": "[steps('networking').vnet.subnets.subnet1.addressPrefix]"
+    }
+        }
+      }
